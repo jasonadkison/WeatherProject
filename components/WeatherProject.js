@@ -9,6 +9,15 @@ import {
 import Forecast from './Forecast';
 import { getWeatherFromZipcode } from '../utils/weather_api';
 
+const backgrounds = {
+  flowers: require('../img/bgs/flowers.png'),
+  lightning: require('../img/bgs/lightning.png'),
+  rain: require('../img/bgs/rain.png'),
+  snow: require('../img/bgs/snow.png'),
+  sunny: require('../img/bgs/sunny.png'),
+  cloudy: require('../img/bgs/clouds.png')
+};
+
 export default class WeatherProject extends Component {
   constructor(props) {
     super(props);
@@ -16,6 +25,7 @@ export default class WeatherProject extends Component {
       zip: '',
       forecast: {
         name: '',
+        code: null,
         main: '',
         description: '',
         temp: null
@@ -27,9 +37,10 @@ export default class WeatherProject extends Component {
     return (
       <View style={styles.container}>
         <Image
-          source={require('image!flowers')}
+          source={this._getBackgroundImage()}
           resizeMode='cover'
-          style={styles.backdrop}>
+          style={styles.backdrop}
+          key={this._getBackgroundImage(true)}>
           <View style={styles.overlay}>
             <View style={styles.row}>
               <Text style={styles.mainText}>
@@ -47,6 +58,28 @@ export default class WeatherProject extends Component {
         </Image>
       </View>
     );
+  }
+  _getBackgroundImage(keyOnly = false) {
+    let { code } = this.state.forecast;
+    let image = 'flowers';
+
+    if (code >= 200 && code < 300) {
+      image = 'lightning';
+    } else if (code >= 300 && code < 600) {
+      image = 'rain';
+    } else if (code >= 600 && code < 700) {
+      image = 'snow';
+    } else if (code === 800) {
+      image = 'sunny';
+    } else if (code >= 801 && code < 900) {
+      image = 'cloudy';
+    }
+
+    if (keyOnly) {
+      return image;
+    }
+
+    return backgrounds[image];
   }
   _handleTextChange(e) {
     let zip = e.nativeEvent.text;
@@ -78,6 +111,7 @@ export default class WeatherProject extends Component {
   _updateForecastWeather(weather) {
     let {
       name,
+      code,
       main,
       description,
       temp
@@ -86,6 +120,7 @@ export default class WeatherProject extends Component {
     this.setState({
       forecast: {
         name,
+        code,
         main,
         description,
         temp
@@ -99,8 +134,7 @@ const baseFontSize = 16;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    paddingTop: 30
+    alignItems: 'center'
   },
   backdrop: {
     flex: 1,
@@ -109,7 +143,7 @@ const styles = StyleSheet.create({
   overlay: {
     paddingTop: 5,
     backgroundColor: '#000000',
-    opacity: 0.5,
+    opacity: 0.7,
     flexDirection: 'column',
     alignItems: 'center'
   },

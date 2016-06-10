@@ -10,9 +10,9 @@ export function getWeatherFromZipcode(zip = '', onSuccess = () => {}) {
     .then((res) => res.json())
     .then((json) => {
       let { name } = json;
-      let { main, description } = json.weather[0];
+      let { id, main, description } = json.weather[0];
       let { temp } = json.main;
-      onSuccess({ name, main, description, temp });
+      onSuccess({ name, code: id, main, description, temp });
     })
     .catch((error) => {
       console.warn(error);
