@@ -7,6 +7,7 @@ import {
   Image
 } from 'react-native';
 import Forecast from './Forecast';
+import { getWeatherFromZipcode } from '../utils/weather_api';
 
 export default class WeatherProject extends Component {
   constructor(props) {
@@ -14,10 +15,12 @@ export default class WeatherProject extends Component {
     this.state = {
       zip: '',
       forecast: {
-        main: 'Clouds',
-        description: 'Few clouds',
-        temp: 45.7
-      }
+        name: '',
+        main: '',
+        description: '',
+        temp: null
+      },
+      error: false
     };
   }
   render() {
@@ -39,7 +42,7 @@ export default class WeatherProject extends Component {
                   onSubmitEditing={this._handleTextChange.bind(this)} />
               </View>
             </View>
-            <Forecast {...this.state.forecast} />
+            {this._forecast()}
           </View>
         </Image>
       </View>
@@ -47,36 +50,47 @@ export default class WeatherProject extends Component {
   }
   _handleTextChange(e) {
     let zip = e.nativeEvent.text;
-    this.setState({ zip: zip });
+    let filteredZip = zip.replace(/\D/g, '');
 
-    fetch(`http://api.openweathermap.org/data/2.5/weather?zip=${zip},us&units=imperial&APPID=2a38b356fea0c50bc8fd8c42a27d740a`, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        let {
-          main,
-          description
-        } = res.weather[0];
-
-        let {
-          temp
-        } = res.main;
-
-        this.setState({
-          forecast: {
-            main,
-            description,
-            temp
-          }
-        });
-      })
-      .catch((error) => {
-        console.warn(error);
+    if (!zip.replace(/ /g,'')) {
+      this.setState({ error: false });
+      return;
+    } else if (filteredZip.length !== 5) {
+      this.setState({
+        error: 'Invalid zip code.'
       });
+      return;
+    }
+
+    this.setState({ zip: filteredZip, error: false });
+
+    getWeatherFromZipcode(filteredZip, this._updateForecastWeather.bind(this));
+  }
+  _forecast() {
+    if (this.state.error) {
+      return <Text style={styles.errorText}>{this.state.error}</Text>;
+    }
+    if (this.state.zip) {
+      return <Forecast {...this.state.forecast} />;
+    }
+    return null;
+  }
+  _updateForecastWeather(weather) {
+    let {
+      name,
+      main,
+      description,
+      temp
+    } = weather;
+
+    this.setState({
+      forecast: {
+        name,
+        main,
+        description,
+        temp
+      }
+    });
   }
 }
 
@@ -121,5 +135,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: baseFontSize,
     color: '#FFFFFF'
+  },
+  errorText: {
+    flex: 1,
+    color: '#F30000',
+    padding: 30
   }
 });
